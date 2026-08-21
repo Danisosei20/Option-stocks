@@ -34,12 +34,7 @@ minimumADX = input.float(
      group = groupCore
 )
 
-atrLength = input.int(
-     14,
-     "ATR Length",
-     minval = 1,
-     group = groupCore
-)
+atrLength = input.int(14, "ATR Length", minval = 1, group = groupCore)
 
 volumeLength = input.int(
      20,
@@ -62,47 +57,13 @@ minimumRelativeVolume = input.float(
 
 groupSymbols = "2. Confirmation Symbols"
 
-symbolQQQ = input.symbol(
-     "NASDAQ:QQQ",
-     "QQQ",
-     group = groupSymbols
-)
-
-symbolSOXX = input.symbol(
-     "NASDAQ:SOXX",
-     "SOXX",
-     group = groupSymbols
-)
-
-symbolNVDA = input.symbol(
-     "NASDAQ:NVDA",
-     "NVDA",
-     group = groupSymbols
-)
-
-symbolSMH = input.symbol(
-     "NASDAQ:SMH",
-     "SMH",
-     group = groupSymbols
-)
-
-symbolSPY = input.symbol(
-     "AMEX:SPY",
-     "SPY",
-     group = groupSymbols
-)
-
-symbolAVGO = input.symbol(
-     "NASDAQ:AVGO",
-     "AVGO",
-     group = groupSymbols
-)
-
-symbolTSM = input.symbol(
-     "NYSE:TSM",
-     "TSM",
-     group = groupSymbols
-)
+symbolQQQ = input.symbol("NASDAQ:QQQ", "QQQ", group = groupSymbols)
+symbolSOXX = input.symbol("NASDAQ:SOXX", "SOXX", group = groupSymbols)
+symbolNVDA = input.symbol("NASDAQ:NVDA", "NVDA", group = groupSymbols)
+symbolSMH = input.symbol("NASDAQ:SMH", "SMH", group = groupSymbols)
+symbolSPY = input.symbol("AMEX:SPY", "SPY", group = groupSymbols)
+symbolAVGO = input.symbol("NASDAQ:AVGO", "AVGO", group = groupSymbols)
+symbolTSM = input.symbol("NYSE:TSM", "TSM", group = groupSymbols)
 
 //=====================================================================
 // 3. CONFIRMATION WEIGHTS
@@ -110,54 +71,13 @@ symbolTSM = input.symbol(
 
 groupWeights = "3. Confirmation Weights"
 
-weightQQQ = input.float(
-     22.0,
-     "QQQ",
-     minval = 0,
-     group = groupWeights
-)
-
-weightSOXX = input.float(
-     22.0,
-     "SOXX",
-     minval = 0,
-     group = groupWeights
-)
-
-weightNVDA = input.float(
-     18.0,
-     "NVDA",
-     minval = 0,
-     group = groupWeights
-)
-
-weightSMH = input.float(
-     15.0,
-     "SMH",
-     minval = 0,
-     group = groupWeights
-)
-
-weightSPY = input.float(
-     8.0,
-     "SPY",
-     minval = 0,
-     group = groupWeights
-)
-
-weightAVGO = input.float(
-     8.0,
-     "AVGO",
-     minval = 0,
-     group = groupWeights
-)
-
-weightTSM = input.float(
-     7.0,
-     "TSM",
-     minval = 0,
-     group = groupWeights
-)
+weightQQQ = input.float(22.0, "QQQ", minval = 0, group = groupWeights)
+weightSOXX = input.float(22.0, "SOXX", minval = 0, group = groupWeights)
+weightNVDA = input.float(18.0, "NVDA", minval = 0, group = groupWeights)
+weightSMH = input.float(15.0, "SMH", minval = 0, group = groupWeights)
+weightSPY = input.float(8.0, "SPY", minval = 0, group = groupWeights)
+weightAVGO = input.float(8.0, "AVGO", minval = 0, group = groupWeights)
+weightTSM = input.float(7.0, "TSM", minval = 0, group = groupWeights)
 
 //=====================================================================
 // 4. SIGNAL SETTINGS
@@ -229,41 +149,12 @@ cooldownBars = input.int(
      group = groupSignals
 )
 
-requireQQQ = input.bool(
-     true,
-     "Require QQQ",
-     group = groupSignals
-)
-
-requireSOXX = input.bool(
-     true,
-     "Require SOXX",
-     group = groupSignals
-)
-
-requireVWAP = input.bool(
-     true,
-     "Require VWAP",
-     group = groupSignals
-)
-
-requireEMA = input.bool(
-     true,
-     "Require EMA Alignment",
-     group = groupSignals
-)
-
-requireADX = input.bool(
-     true,
-     "Require ADX",
-     group = groupSignals
-)
-
-requireVolume = input.bool(
-     false,
-     "Require Relative Volume",
-     group = groupSignals
-)
+requireQQQ = input.bool(true, "Require QQQ", group = groupSignals)
+requireSOXX = input.bool(true, "Require SOXX", group = groupSignals)
+requireVWAP = input.bool(true, "Require VWAP", group = groupSignals)
+requireEMA = input.bool(true, "Require EMA Alignment", group = groupSignals)
+requireADX = input.bool(true, "Require ADX", group = groupSignals)
+requireVolume = input.bool(false, "Require Relative Volume", group = groupSignals)
 
 onlyFiveMinute = input.bool(
      true,
@@ -272,7 +163,7 @@ onlyFiveMinute = input.bool(
 )
 
 //=====================================================================
-// 5. RISK / TARGETS
+// 5. RISK / TARGET SETTINGS
 //=====================================================================
 
 groupRisk = "5. Risk / Targets"
@@ -307,11 +198,7 @@ target2ATR = input.float(
 
 groupZones = "6. Supply / Demand"
 
-showZones = input.bool(
-     true,
-     "Show Supply / Demand",
-     group = groupZones
-)
+showZones = input.bool(true, "Show Supply / Demand", group = groupZones)
 
 pivotLength = input.int(
      6,
@@ -361,51 +248,21 @@ maxDemandZones = input.int(
 
 groupDisplay = "7. Display"
 
-showDashboard = input.bool(
-     true,
-     "Show Dashboard",
-     group = groupDisplay
-)
-
-showEMA = input.bool(
-     true,
-     "Show EMA 9 / 21 / 50",
-     group = groupDisplay
-)
-
-showVWAP = input.bool(
-     true,
-     "Show VWAP",
-     group = groupDisplay
-)
-
-showLatestSignal = input.bool(
-     true,
-     "Show Latest Signal",
-     group = groupDisplay
-)
-
-showTradeLevels = input.bool(
-     false,
-     "Show Entry / Stop / Targets",
-     group = groupDisplay
-)
+showDashboard = input.bool(true, "Show Dashboard", group = groupDisplay)
+showEMA = input.bool(true, "Show EMA 9 / 21 / 50", group = groupDisplay)
+showVWAP = input.bool(true, "Show VWAP", group = groupDisplay)
+showLatestSignal = input.bool(true, "Show Latest Signal", group = groupDisplay)
+showTradeLevels = input.bool(false, "Show Entry / Stop / Targets", group = groupDisplay)
 
 //=====================================================================
 // 8. HELPER FUNCTIONS
 //=====================================================================
 
 clampSigned(float value) =>
-    math.max(
-         -100.0,
-         math.min(100.0, value)
-    )
+    math.max(-100.0, math.min(100.0, value))
 
 clampConfidence(float value) =>
-    math.max(
-         0.0,
-         math.min(100.0, value)
-    )
+    math.max(0.0, math.min(100.0, value))
 
 directionText(float score) =>
     string result = "NEUTRAL"
@@ -418,37 +275,14 @@ directionText(float score) =>
     result
 
 confirmationScore() =>
-    float localEMA9 = ta.ema(
-         close,
-         emaFastLength
-    )
-
-    float localEMA21 = ta.ema(
-         close,
-         emaSlowLength
-    )
-
-    float localEMA50 = ta.ema(
-         close,
-         emaTrendLength
-    )
-
+    float localEMA9 = ta.ema(close, emaFastLength)
+    float localEMA21 = ta.ema(close, emaSlowLength)
+    float localEMA50 = ta.ema(close, emaTrendLength)
     float localVWAP = ta.vwap(hlc3)
+    float localRSI = ta.rsi(close, rsiLength)
 
-    float localRSI = ta.rsi(
-         close,
-         rsiLength
-    )
-
-    float localMACDFast = ta.ema(
-         close,
-         macdFastLength
-    )
-
-    float localMACDSlow = ta.ema(
-         close,
-         macdSlowLength
-    )
+    float localMACDFast = ta.ema(close, macdFastLength)
+    float localMACDSlow = ta.ema(close, macdSlowLength)
 
     float localMACDLine = (
          localMACDFast -
@@ -502,7 +336,6 @@ zoneExistsNear(
     bool found = false
 
     if array.size(zones) > 0
-
         for i = 0 to array.size(zones) - 1
 
             box existingZone = array.get(
@@ -515,12 +348,10 @@ zoneExistsNear(
                  box.get_bottom(existingZone)
             ) / 2.0
 
-            if (
-                 math.abs(
-                      existingCenter -
-                      newCenter
-                 ) <= minimumDistance
-            )
+            if math.abs(
+                 existingCenter -
+                 newCenter
+            ) <= minimumDistance
 
                 found := true
 
@@ -530,20 +361,9 @@ zoneExistsNear(
 // 9. AMD TECHNICALS
 //=====================================================================
 
-ema9 = ta.ema(
-     close,
-     emaFastLength
-)
-
-ema21 = ta.ema(
-     close,
-     emaSlowLength
-)
-
-ema50 = ta.ema(
-     close,
-     emaTrendLength
-)
+ema9 = ta.ema(close, emaFastLength)
+ema21 = ta.ema(close, emaSlowLength)
+ema50 = ta.ema(close, emaTrendLength)
 
 sessionVWAP = ta.vwap(hlc3)
 
@@ -551,6 +371,10 @@ rsiValue = ta.rsi(
      close,
      rsiLength
 )
+
+//---------------------------------------------------------------------
+// MACD 12 / 26 / 9
+//---------------------------------------------------------------------
 
 macdFast = ta.ema(
      close,
@@ -576,6 +400,30 @@ macdHistogram = (
      macdLine -
      macdSignal
 )
+
+macdBullish = (
+     macdHistogram > 0 and
+     macdHistogram >= macdHistogram[1]
+)
+
+macdBearish = (
+     macdHistogram < 0 and
+     macdHistogram <= macdHistogram[1]
+)
+
+// Dashboard MACD status.
+// This makes MACD visible rather than hiding it inside Momentum.
+
+string macdStatus = "MIXED"
+
+if macdBullish
+    macdStatus := "BULLISH"
+else if macdBearish
+    macdStatus := "BEARISH"
+
+//---------------------------------------------------------------------
+// DMI / ADX
+//---------------------------------------------------------------------
 
 [plusDI, minusDI, adxValue] = ta.dmi(
      dmiLength,
@@ -615,16 +463,6 @@ emaBearish = (
      ema9 < ema21 and
      close < ema9 and
      close < ema50
-)
-
-macdBullish = (
-     macdHistogram > 0 and
-     macdHistogram >= macdHistogram[1]
-)
-
-macdBearish = (
-     macdHistogram < 0 and
-     macdHistogram <= macdHistogram[1]
 )
 
 strongTrend = (
@@ -672,6 +510,10 @@ trendScore := clampSigned(
 
 float momentumScore = 0.0
 
+//---------------------------------------------------------------------
+// RSI
+//---------------------------------------------------------------------
+
 if rsiValue >= 60
     momentumScore += 35
 
@@ -684,11 +526,19 @@ else if rsiValue <= 40
 else if rsiValue <= 48
     momentumScore -= 20
 
+//---------------------------------------------------------------------
+// MACD
+//---------------------------------------------------------------------
+
 if macdBullish
     momentumScore += 40
 
 else if macdBearish
     momentumScore -= 40
+
+//---------------------------------------------------------------------
+// PRICE MOMENTUM
+//---------------------------------------------------------------------
 
 if close > close[1]
     momentumScore += 25
@@ -708,7 +558,6 @@ float institutionalScore = 0.0
 
 if priceAboveVWAP
     institutionalScore += 45
-
 else if priceBelowVWAP
     institutionalScore -= 45
 
@@ -716,28 +565,24 @@ if (
      strongTrend and
      plusDI > minusDI
 )
-
     institutionalScore += 30
 
 else if (
      strongTrend and
      minusDI > plusDI
 )
-
     institutionalScore -= 30
 
 if (
      strongVolume and
      close > open
 )
-
     institutionalScore += 25
 
 else if (
      strongVolume and
      close < open
 )
-
     institutionalScore -= 25
 
 institutionalScore := clampSigned(
@@ -805,7 +650,7 @@ tsmScore = request.security(
 )
 
 //=====================================================================
-// 14. EXTERNAL LEADERSHIP SCORE
+// 14. EXTERNAL LEADERSHIP
 //=====================================================================
 
 totalWeight = (
@@ -884,13 +729,8 @@ else if tsmScore <= -20
 // 16. AMD CONFIDENCE ENGINE
 //=====================================================================
 
-// AMD itself controls 75% of the model:
-//
-// Trend          35%
-// Momentum       20%
-// Institutional  20%
-//
-// External confirmation controls 25%.
+// AMD itself = 75%
+// External market = 25%
 
 overallSignedScore = (
      trendScore * 0.35 +
@@ -913,7 +753,7 @@ confidence := clampConfidence(
 )
 
 //=====================================================================
-// 17. SUPPLY / DEMAND
+// 17. SUPPLY / DEMAND ARRAYS
 //=====================================================================
 
 var array<box> supplyZones = array.new_box()
@@ -931,12 +771,10 @@ demandPivot = ta.pivotlow(
      pivotLength
 )
 
-pivotATR = (
-     atrValue[pivotLength]
-)
+pivotATR = atrValue[pivotLength]
 
 //=====================================================================
-// 18. CREATE SUPPLY
+// 18. CREATE SUPPLY ZONE
 //=====================================================================
 
 if (
@@ -996,10 +834,7 @@ if (
              newSupply
         )
 
-        if (
-             array.size(supplyZones) >
-             maxSupplyZones
-        )
+        if array.size(supplyZones) > maxSupplyZones
 
             box oldSupply = array.pop(
                  supplyZones
@@ -1010,7 +845,7 @@ if (
             )
 
 //=====================================================================
-// 19. CREATE DEMAND
+// 19. CREATE DEMAND ZONE
 //=====================================================================
 
 if (
@@ -1070,10 +905,7 @@ if (
              newDemand
         )
 
-        if (
-             array.size(demandZones) >
-             maxDemandZones
-        )
+        if array.size(demandZones) > maxDemandZones
 
             box oldDemand = array.pop(
                  demandZones
@@ -1101,13 +933,10 @@ if array.size(supplyZones) > 0
              supplyIndex
         )
 
-        bool supplyBroken = (
+        if (
              barstate.isconfirmed and
-             close >
-             box.get_top(currentSupply)
+             close > box.get_top(currentSupply)
         )
-
-        if supplyBroken
 
             box.delete(
                  currentSupply
@@ -1138,13 +967,10 @@ if array.size(demandZones) > 0
              demandIndex
         )
 
-        bool demandBroken = (
+        if (
              barstate.isconfirmed and
-             close <
-             box.get_bottom(currentDemand)
+             close < box.get_bottom(currentDemand)
         )
-
-        if demandBroken
 
             box.delete(
                  currentDemand
@@ -1158,7 +984,7 @@ if array.size(demandZones) > 0
         demandIndex -= 1
 
 //=====================================================================
-// 22. NEAREST SUPPLY / DEMAND
+// 22. FIND NEAREST SUPPLY / DEMAND
 //=====================================================================
 
 float nearestSupplyTop = na
@@ -1207,19 +1033,19 @@ if array.size(supplyZones) > 0
 
         else if zoneBottom > close
 
-            float distance = (
+            float supplyDistance = (
                  zoneBottom -
                  close
             )
 
             if (
                  na(nearestSupplyDistance) or
-                 distance <
+                 supplyDistance <
                  nearestSupplyDistance
             )
 
                 nearestSupplyDistance :=
-                     distance
+                     supplyDistance
 
                 nearestSupplyTop :=
                      zoneTop
@@ -1262,19 +1088,19 @@ if array.size(demandZones) > 0
 
         else if zoneTop < close
 
-            float distance = (
+            float demandDistance = (
                  close -
                  zoneTop
             )
 
             if (
                  na(nearestDemandDistance) or
-                 distance <
+                 demandDistance <
                  nearestDemandDistance
             )
 
                 nearestDemandDistance :=
-                     distance
+                     demandDistance
 
                 nearestDemandTop :=
                      zoneTop
@@ -1304,7 +1130,7 @@ else if (
     zoneStatus := "NO ACTIVE ZONES"
 
 //=====================================================================
-// 24. FILTERS
+// 24. SIGNAL FILTERS
 //=====================================================================
 
 fiveMinuteOK = (
@@ -1415,26 +1241,22 @@ putSetup = (
 
 strongCallSetup = (
      callSetup and
-     confidence >=
-     strongCallThreshold
+     confidence >= strongCallThreshold
 )
 
 strongPutSetup = (
      putSetup and
-     confidence <=
-     strongPutThreshold
+     confidence <= strongPutThreshold
 )
 
 callWatch = (
      not callSetup and
-     confidence >=
-     callWatchThreshold
+     confidence >= callWatchThreshold
 )
 
 putWatch = (
      not putSetup and
-     confidence <=
-     putWatchThreshold
+     confidence <= putWatchThreshold
 )
 
 //=====================================================================
@@ -1792,10 +1614,15 @@ else if (
 // 32. DASHBOARD
 //=====================================================================
 
+// UPDATED FROM 27 TO 29 ROWS
+// New rows:
+// MACD
+// RSI
+
 var table dash = table.new(
      position.top_right,
      2,
-     27,
+     29,
      bgcolor = panelBG,
      frame_color = panelBorder,
      frame_width = 1,
@@ -1813,7 +1640,7 @@ if (
          0,
          0,
          1,
-         26
+         28
     )
 
     //-------------------------------------------------------------
@@ -1839,7 +1666,7 @@ if (
     )
 
     //-------------------------------------------------------------
-    // STATUS
+    // MARKET STATUS
     //-------------------------------------------------------------
 
     table.cell(
@@ -1944,11 +1771,15 @@ if (
               : neutralText
     )
 
+    //-------------------------------------------------------------
+    // NEW: MACD
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
          5,
-         "Leadership",
+         "MACD",
          bgcolor = panelBG,
          text_color = color.silver
     )
@@ -1957,6 +1788,63 @@ if (
          dash,
          1,
          5,
+         macdStatus,
+         bgcolor = panelBG,
+         text_color =
+              macdBullish
+              ? bullishText
+              : macdBearish
+              ? bearishText
+              : warningText
+    )
+
+    //-------------------------------------------------------------
+    // NEW: RSI
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         6,
+         "RSI",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         6,
+         str.tostring(
+              rsiValue,
+              "#.0"
+         ),
+         bgcolor = panelBG,
+         text_color =
+              rsiValue >= 55
+              ? bullishText
+              : rsiValue <= 45
+              ? bearishText
+              : neutralText
+    )
+
+    //-------------------------------------------------------------
+    // LEADERSHIP
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         7,
+         "Leadership",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         7,
          str.tostring(
               leadershipScore,
               "#"
@@ -1970,10 +1858,14 @@ if (
               : neutralText
     )
 
+    //-------------------------------------------------------------
+    // INSTITUTIONAL
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         6,
+         8,
          "Institutional",
          bgcolor = panelBG,
          text_color = color.silver
@@ -1982,7 +1874,7 @@ if (
     table.cell(
          dash,
          1,
-         6,
+         8,
          str.tostring(
               institutionalScore,
               "#"
@@ -2003,7 +1895,7 @@ if (
     table.cell(
          dash,
          0,
-         7,
+         9,
          "CONFIRMATIONS",
          bgcolor = panelHeader,
          text_color = color.white
@@ -2012,15 +1904,19 @@ if (
     table.cell(
          dash,
          1,
-         7,
+         9,
          "",
          bgcolor = panelHeader
     )
 
+    //-------------------------------------------------------------
+    // QQQ
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         8,
+         10,
          "QQQ",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2029,7 +1925,7 @@ if (
     table.cell(
          dash,
          1,
-         8,
+         10,
          directionText(
               qqqScore
          ),
@@ -2042,10 +1938,14 @@ if (
               : neutralText
     )
 
+    //-------------------------------------------------------------
+    // SOXX
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         9,
+         11,
          "SOXX",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2054,7 +1954,7 @@ if (
     table.cell(
          dash,
          1,
-         9,
+         11,
          directionText(
               soxxScore
          ),
@@ -2067,10 +1967,14 @@ if (
               : neutralText
     )
 
+    //-------------------------------------------------------------
+    // NVDA
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         10,
+         12,
          "NVDA",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2079,7 +1983,7 @@ if (
     table.cell(
          dash,
          1,
-         10,
+         12,
          directionText(
               nvdaScore
          ),
@@ -2092,10 +1996,14 @@ if (
               : neutralText
     )
 
+    //-------------------------------------------------------------
+    // SMH
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         11,
+         13,
          "SMH",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2104,7 +2012,7 @@ if (
     table.cell(
          dash,
          1,
-         11,
+         13,
          directionText(
               smhScore
          ),
@@ -2118,13 +2026,13 @@ if (
     )
 
     //-------------------------------------------------------------
-    // TECHNICALS
+    // TECHNICALS HEADER
     //-------------------------------------------------------------
 
     table.cell(
          dash,
          0,
-         12,
+         14,
          "TECHNICALS",
          bgcolor = panelHeader,
          text_color = color.white
@@ -2133,15 +2041,19 @@ if (
     table.cell(
          dash,
          1,
-         12,
+         14,
          "",
          bgcolor = panelHeader
     )
 
+    //-------------------------------------------------------------
+    // VWAP
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         13,
+         15,
          "VWAP",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2150,7 +2062,7 @@ if (
     table.cell(
          dash,
          1,
-         13,
+         15,
          priceAboveVWAP
               ? "ABOVE"
               : "BELOW",
@@ -2160,6 +2072,10 @@ if (
               ? bullishText
               : bearishText
     )
+
+    //-------------------------------------------------------------
+    // EMA
+    //-------------------------------------------------------------
 
     string emaStatus = (
          emaBullish
@@ -2172,7 +2088,7 @@ if (
     table.cell(
          dash,
          0,
-         14,
+         16,
          "EMA",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2181,7 +2097,7 @@ if (
     table.cell(
          dash,
          1,
-         14,
+         16,
          emaStatus,
          bgcolor = panelBG,
          text_color =
@@ -2192,10 +2108,14 @@ if (
               : warningText
     )
 
+    //-------------------------------------------------------------
+    // ADX
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         15,
+         17,
          "ADX",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2204,7 +2124,7 @@ if (
     table.cell(
          dash,
          1,
-         15,
+         17,
          str.tostring(
               adxValue,
               "#.0"
@@ -2221,10 +2141,14 @@ if (
               : warningText
     )
 
+    //-------------------------------------------------------------
+    // VOLUME
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         16,
+         18,
          "Volume",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2233,7 +2157,7 @@ if (
     table.cell(
          dash,
          1,
-         16,
+         18,
          str.tostring(
               relativeVolume,
               "#.00"
@@ -2246,13 +2170,13 @@ if (
     )
 
     //-------------------------------------------------------------
-    // LEVELS
+    // LEVELS HEADER
     //-------------------------------------------------------------
 
     table.cell(
          dash,
          0,
-         17,
+         19,
          "LEVELS",
          bgcolor = panelHeader,
          text_color = color.white
@@ -2261,15 +2185,19 @@ if (
     table.cell(
          dash,
          1,
-         17,
+         19,
          "",
          bgcolor = panelHeader
     )
 
+    //-------------------------------------------------------------
+    // ENTRY
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         18,
+         20,
          "Entry",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2278,7 +2206,7 @@ if (
     table.cell(
          dash,
          1,
-         18,
+         20,
          str.tostring(
               referenceEntry,
               format.mintick
@@ -2287,10 +2215,14 @@ if (
          text_color = color.white
     )
 
+    //-------------------------------------------------------------
+    // STOP
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         19,
+         21,
          "Stop",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2299,7 +2231,7 @@ if (
     table.cell(
          dash,
          1,
-         19,
+         21,
          str.tostring(
               referenceStop,
               format.mintick
@@ -2308,10 +2240,14 @@ if (
          text_color = bearishText
     )
 
+    //-------------------------------------------------------------
+    // TARGET 1
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         20,
+         22,
          "Target 1",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2320,7 +2256,7 @@ if (
     table.cell(
          dash,
          1,
-         20,
+         22,
          str.tostring(
               referenceTarget1,
               format.mintick
@@ -2329,10 +2265,14 @@ if (
          text_color = bullishText
     )
 
+    //-------------------------------------------------------------
+    // TARGET 2
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         21,
+         23,
          "Target 2",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2341,7 +2281,7 @@ if (
     table.cell(
          dash,
          1,
-         21,
+         23,
          str.tostring(
               referenceTarget2,
               format.mintick
@@ -2350,10 +2290,14 @@ if (
          text_color = bullishText
     )
 
+    //-------------------------------------------------------------
+    // R/R
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         22,
+         24,
          "R / R",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2362,7 +2306,7 @@ if (
     table.cell(
          dash,
          1,
-         22,
+         24,
          str.tostring(
               rewardRisk,
               "#.00"
@@ -2372,13 +2316,13 @@ if (
     )
 
     //-------------------------------------------------------------
-    // SUPPLY / DEMAND
+    // SUPPLY / DEMAND HEADER
     //-------------------------------------------------------------
 
     table.cell(
          dash,
          0,
-         23,
+         25,
          "SUPPLY / DEMAND",
          bgcolor = panelHeader,
          text_color = color.white
@@ -2387,10 +2331,14 @@ if (
     table.cell(
          dash,
          1,
-         23,
+         25,
          "",
          bgcolor = panelHeader
     )
+
+    //-------------------------------------------------------------
+    // ZONE STATUS
+    //-------------------------------------------------------------
 
     color zoneStatusColor = (
          priceInSupply
@@ -2403,7 +2351,7 @@ if (
     table.cell(
          dash,
          0,
-         24,
+         26,
          "Status",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2412,16 +2360,20 @@ if (
     table.cell(
          dash,
          1,
-         24,
+         26,
          zoneStatus,
          bgcolor = panelBG,
          text_color = zoneStatusColor
     )
 
+    //-------------------------------------------------------------
+    // NEAREST SUPPLY
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         25,
+         27,
          "Nearest Supply",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2430,7 +2382,7 @@ if (
     table.cell(
          dash,
          1,
-         25,
+         27,
          na(nearestSupplyBottom)
               ? "N/A"
               : str.tostring(
@@ -2441,10 +2393,14 @@ if (
          text_color = bearishText
     )
 
+    //-------------------------------------------------------------
+    // NEAREST DEMAND
+    //-------------------------------------------------------------
+
     table.cell(
          dash,
          0,
-         26,
+         28,
          "Nearest Demand",
          bgcolor = panelBG,
          text_color = color.silver
@@ -2453,7 +2409,7 @@ if (
     table.cell(
          dash,
          1,
-         26,
+         28,
          na(nearestDemandTop)
               ? "N/A"
               : str.tostring(
