@@ -1,0 +1,3511 @@
+//@version=6
+indicator(
+     "SPY Options V3 - Location Engine",
+     shorttitle = "SPY OPTIONS V3",
+     overlay = true,
+     max_labels_count = 100,
+     max_boxes_count = 30,
+     max_lines_count = 100
+)
+
+//=====================================================================
+// 1. CORE SETTINGS
+//=====================================================================
+
+groupCore = "1. Core Settings"
+
+emaFastLength  = input.int(9, "EMA Fast", minval = 1, group = groupCore)
+emaSlowLength  = input.int(21, "EMA Slow", minval = 1, group = groupCore)
+emaTrendLength = input.int(50, "EMA Trend", minval = 1, group = groupCore)
+
+rsiLength = input.int(14, "RSI Length", minval = 2, group = groupCore)
+
+macdFastLength   = input.int(12, "MACD Fast", minval = 1, group = groupCore)
+macdSlowLength   = input.int(26, "MACD Slow", minval = 2, group = groupCore)
+macdSignalLength = input.int(9, "MACD Signal", minval = 1, group = groupCore)
+
+dmiLength    = input.int(14, "DMI Length", minval = 2, group = groupCore)
+adxSmoothing = input.int(14, "ADX Smoothing", minval = 2, group = groupCore)
+
+minimumADX = input.float(
+     18.0,
+     "Minimum ADX",
+     minval = 1.0,
+     step = 0.5,
+     group = groupCore
+)
+
+atrLength = input.int(14, "ATR Length", minval = 1, group = groupCore)
+
+volumeLength = input.int(
+     20,
+     "Relative Volume Length",
+     minval = 2,
+     group = groupCore
+)
+
+minimumRelativeVolume = input.float(
+     0.80,
+     "Minimum Relative Volume",
+     minval = 0.10,
+     step = 0.05,
+     group = groupCore
+)
+
+//=====================================================================
+// 2. CONFIRMATION SYMBOLS
+//=====================================================================
+
+groupSymbols = "2. Confirmation Symbols"
+
+symbolQQQ = input.symbol("NASDAQ:QQQ", "QQQ", group = groupSymbols)
+symbolDIA = input.symbol("AMEX:DIA", "DIA", group = groupSymbols)
+symbolIWM = input.symbol("AMEX:IWM", "IWM", group = groupSymbols)
+symbolVIX = input.symbol("CBOE:VIX", "VIX", group = groupSymbols)
+symbolXLK = input.symbol("AMEX:XLK", "XLK", group = groupSymbols)
+symbolXLF = input.symbol("AMEX:XLF", "XLF", group = groupSymbols)
+symbolXLY = input.symbol("AMEX:XLY", "XLY", group = groupSymbols)
+
+//=====================================================================
+// 3. EXTERNAL WEIGHTS
+//=====================================================================
+
+groupWeights = "3. External Weights"
+
+weightQQQ = input.float(22.0, "QQQ", minval = 0, group = groupWeights)
+weightDIA = input.float(16.0, "DIA", minval = 0, group = groupWeights)
+weightIWM = input.float(16.0, "IWM", minval = 0, group = groupWeights)
+weightVIX = input.float(18.0, "VIX Effect", minval = 0, group = groupWeights)
+weightXLK = input.float(12.0, "XLK", minval = 0, group = groupWeights)
+weightXLF = input.float(8.0, "XLF", minval = 0, group = groupWeights)
+weightXLY = input.float(8.0, "XLY", minval = 0, group = groupWeights)
+
+//=====================================================================
+// 4. SIGNAL SETTINGS
+//=====================================================================
+
+groupSignals = "4. Signal Settings"
+
+strongCallThreshold = input.float(
+     85.0,
+     "Strong CALL Threshold",
+     minval = 50,
+     maxval = 100,
+     group = groupSignals
+)
+
+callThreshold = input.float(
+     72.0,
+     "CALL Threshold",
+     minval = 50,
+     maxval = 100,
+     group = groupSignals
+)
+
+callWatchThreshold = input.float(
+     60.0,
+     "CALL Watch Threshold",
+     minval = 50,
+     maxval = 100,
+     group = groupSignals
+)
+
+putWatchThreshold = input.float(
+     40.0,
+     "PUT Watch Threshold",
+     minval = 0,
+     maxval = 50,
+     group = groupSignals
+)
+
+putThreshold = input.float(
+     28.0,
+     "PUT Threshold",
+     minval = 0,
+     maxval = 50,
+     group = groupSignals
+)
+
+strongPutThreshold = input.float(
+     15.0,
+     "Strong PUT Threshold",
+     minval = 0,
+     maxval = 50,
+     group = groupSignals
+)
+
+minimumConfirmations = input.int(
+     4,
+     "Minimum External Confirmations",
+     minval = 1,
+     maxval = 7,
+     group = groupSignals
+)
+
+cooldownBars = input.int(
+     6,
+     "Signal Cooldown Bars",
+     minval = 1,
+     maxval = 100,
+     group = groupSignals
+)
+
+requireQQQ    = input.bool(true, "Require QQQ", group = groupSignals)
+requireVIX    = input.bool(true, "Require VIX Effect", group = groupSignals)
+requireVWAP   = input.bool(true, "Require VWAP", group = groupSignals)
+requireEMA    = input.bool(true, "Require EMA Alignment", group = groupSignals)
+requireADX    = input.bool(true, "Require ADX", group = groupSignals)
+requireVolume = input.bool(false, "Require Relative Volume", group = groupSignals)
+
+onlyFiveMinute = input.bool(
+     true,
+     "Signals Only on 5-Minute Chart",
+     group = groupSignals
+)
+
+//=====================================================================
+// 5. RISK / TARGETS
+//=====================================================================
+
+groupRisk = "5. Risk / Targets"
+
+stopATR = input.float(
+     1.0,
+     "Stop ATR",
+     minval = 0.1,
+     step = 0.1,
+     group = groupRisk
+)
+
+target1ATR = input.float(
+     1.5,
+     "Target 1 ATR",
+     minval = 0.1,
+     step = 0.1,
+     group = groupRisk
+)
+
+target2ATR = input.float(
+     2.5,
+     "Target 2 ATR",
+     minval = 0.1,
+     step = 0.1,
+     group = groupRisk
+)
+
+//=====================================================================
+// 6. SUPPLY / DEMAND
+//=====================================================================
+
+groupZones = "6. Supply / Demand"
+
+showZones = input.bool(
+     true,
+     "Show Supply / Demand",
+     group = groupZones
+)
+
+pivotLength = input.int(
+     6,
+     "Pivot Strength",
+     minval = 2,
+     maxval = 20,
+     group = groupZones
+)
+
+zoneATRWidth = input.float(
+     0.55,
+     "Zone Width ATR",
+     minval = 0.10,
+     maxval = 2.0,
+     step = 0.05,
+     group = groupZones
+)
+
+zoneSpacingATR = input.float(
+     1.25,
+     "Minimum Zone Spacing ATR",
+     minval = 0.25,
+     maxval = 5.0,
+     step = 0.25,
+     group = groupZones
+)
+
+maxSupplyZones = input.int(
+     2,
+     "Maximum Supply Zones",
+     minval = 1,
+     maxval = 2,
+     group = groupZones
+)
+
+maxDemandZones = input.int(
+     2,
+     "Maximum Demand Zones",
+     minval = 1,
+     maxval = 2,
+     group = groupZones
+)
+
+//=====================================================================
+// 7. POINT OF CONTROL
+//=====================================================================
+
+groupPOC = "7. Point of Control"
+
+showPOC = input.bool(
+     true,
+     "Show POC Zone",
+     group = groupPOC
+)
+
+pocLookback = input.int(
+     100,
+     "POC Lookback Bars",
+     minval = 20,
+     maxval = 500,
+     group = groupPOC
+)
+
+pocBins = input.int(
+     30,
+     "POC Price Bins",
+     minval = 10,
+     maxval = 100,
+     group = groupPOC
+)
+
+pocZoneATRWidth = input.float(
+     0.15,
+     "POC Zone Width ATR",
+     minval = 0.05,
+     maxval = 1.0,
+     step = 0.05,
+     group = groupPOC
+)
+
+requirePOC = input.bool(
+     false,
+     "Require POC For Signals",
+     group = groupPOC
+)
+
+pocScoreWeight = input.float(
+     10.0,
+     "POC Confidence Weight",
+     minval = 0,
+     maxval = 20,
+     step = 1,
+     group = groupPOC
+)
+
+//=====================================================================
+// 8. OPENING RANGE
+//=====================================================================
+
+groupOR = "8. Opening Range"
+
+showOpeningRange = input.bool(
+     true,
+     "Show Opening Range",
+     group = groupOR
+)
+
+openingRangeMinutes = input.int(
+     30,
+     "Opening Range Minutes",
+     options = [15, 30],
+     group = groupOR
+)
+
+showORMid = input.bool(
+     false,
+     "Show OR Midpoint",
+     group = groupOR
+)
+
+useOpeningRangeObstacle = input.bool(
+     true,
+     "Use OR As Obstacle",
+     group = groupOR
+)
+
+//=====================================================================
+// 9. PREVIOUS DAY / PREMARKET
+//=====================================================================
+
+groupLevels = "9. Previous Day / Premarket"
+
+showPreviousDay = input.bool(
+     true,
+     "Show Previous Day High / Low",
+     group = groupLevels
+)
+
+showPremarket = input.bool(
+     true,
+     "Show Premarket High / Low",
+     group = groupLevels
+)
+
+premarketSession = input.session(
+     "0400-0930",
+     "Premarket Session",
+     group = groupLevels
+)
+
+usePreviousDayObstacle = input.bool(
+     true,
+     "Use Previous Day As Obstacle",
+     group = groupLevels
+)
+
+usePremarketObstacle = input.bool(
+     true,
+     "Use Premarket As Obstacle",
+     group = groupLevels
+)
+
+//=====================================================================
+// 10. LOCATION / ROOM-TO-MOVE ENGINE
+//=====================================================================
+
+groupLocation = "10. Location Engine"
+
+useRoomFilter = input.bool(
+     true,
+     "Use Room-To-Move Filter",
+     group = groupLocation
+)
+
+minimumRoomATR = input.float(
+     0.75,
+     "Minimum Room To Move (ATR)",
+     minval = 0.10,
+     maxval = 5.0,
+     step = 0.05,
+     group = groupLocation
+)
+
+goodRoomATR = input.float(
+     1.25,
+     "Good Room To Move (ATR)",
+     minval = 0.10,
+     maxval = 5.0,
+     step = 0.05,
+     group = groupLocation
+)
+
+excellentRoomATR = input.float(
+     2.0,
+     "Excellent Room To Move (ATR)",
+     minval = 0.25,
+     maxval = 10.0,
+     step = 0.25,
+     group = groupLocation
+)
+
+useSupplyDemandObstacle = input.bool(
+     true,
+     "Use Supply / Demand As Obstacles",
+     group = groupLocation
+)
+
+//=====================================================================
+// 11. DISPLAY
+//=====================================================================
+
+groupDisplay = "11. Display"
+
+showDashboard = input.bool(
+     true,
+     "Show Dashboard",
+     group = groupDisplay
+)
+
+showEMA = input.bool(
+     true,
+     "Show EMA 9 / 21 / 50",
+     group = groupDisplay
+)
+
+showVWAP = input.bool(
+     true,
+     "Show VWAP",
+     group = groupDisplay
+)
+
+showLatestSignal = input.bool(
+     true,
+     "Show Latest Signal",
+     group = groupDisplay
+)
+
+showTradeLevels = input.bool(
+     false,
+     "Show Entry / Stop / Targets",
+     group = groupDisplay
+)
+
+//=====================================================================
+// 12. HELPERS
+//=====================================================================
+
+clampSigned(float value) =>
+    math.max(-100.0, math.min(100.0, value))
+
+clampConfidence(float value) =>
+    math.max(0.0, math.min(100.0, value))
+
+directionText(float score) =>
+    string result = "NEUTRAL"
+
+    if score >= 20
+        result := "BULLISH"
+    else if score <= -20
+        result := "BEARISH"
+
+    result
+
+confirmationScore() =>
+    float localEMA9 = ta.ema(close, emaFastLength)
+    float localEMA21 = ta.ema(close, emaSlowLength)
+    float localEMA50 = ta.ema(close, emaTrendLength)
+    float localVWAP = ta.vwap(hlc3)
+    float localRSI = ta.rsi(close, rsiLength)
+
+    float localMACDFast = ta.ema(close, macdFastLength)
+    float localMACDSlow = ta.ema(close, macdSlowLength)
+    float localMACDLine = localMACDFast - localMACDSlow
+    float localMACDSignal = ta.ema(localMACDLine, macdSignalLength)
+    float localHistogram = localMACDLine - localMACDSignal
+
+    float score = 0.0
+
+    if localEMA9 > localEMA21
+        score += 20
+    else if localEMA9 < localEMA21
+        score -= 20
+
+    if close > localEMA50
+        score += 20
+    else if close < localEMA50
+        score -= 20
+
+    if close > localVWAP
+        score += 20
+    else if close < localVWAP
+        score -= 20
+
+    if localRSI >= 55
+        score += 20
+    else if localRSI <= 45
+        score -= 20
+
+    if localHistogram > 0
+        score += 20
+    else if localHistogram < 0
+        score -= 20
+
+    clampSigned(score)
+
+zoneExistsNear(
+     array<box> zones,
+     float newCenter,
+     float minimumDistance
+) =>
+    bool found = false
+
+    if array.size(zones) > 0
+        for i = 0 to array.size(zones) - 1
+            box existingZone = array.get(zones, i)
+
+            float existingCenter = (
+                 box.get_top(existingZone) +
+                 box.get_bottom(existingZone)
+            ) / 2.0
+
+            if math.abs(existingCenter - newCenter) <= minimumDistance
+                found := true
+
+    found
+
+//=====================================================================
+// 13. SPY TECHNICALS
+//=====================================================================
+
+ema9 = ta.ema(close, emaFastLength)
+ema21 = ta.ema(close, emaSlowLength)
+ema50 = ta.ema(close, emaTrendLength)
+
+sessionVWAP = ta.vwap(hlc3)
+rsiValue = ta.rsi(close, rsiLength)
+
+macdFast = ta.ema(close, macdFastLength)
+macdSlow = ta.ema(close, macdSlowLength)
+
+macdLine = macdFast - macdSlow
+macdSignal = ta.ema(macdLine, macdSignalLength)
+macdHistogram = macdLine - macdSignal
+
+macdBullish = (
+     macdHistogram > 0 and
+     macdHistogram >= macdHistogram[1]
+)
+
+macdBearish = (
+     macdHistogram < 0 and
+     macdHistogram <= macdHistogram[1]
+)
+
+string macdStatus = "MIXED"
+
+if macdBullish
+    macdStatus := "BULLISH"
+else if macdBearish
+    macdStatus := "BEARISH"
+
+[plusDI, minusDI, adxValue] = ta.dmi(
+     dmiLength,
+     adxSmoothing
+)
+
+atrValue = ta.atr(atrLength)
+
+averageVolume = ta.sma(
+     volume,
+     volumeLength
+)
+
+relativeVolume = (
+     averageVolume > 0
+     ? volume / averageVolume
+     : 0.0
+)
+
+priceAboveVWAP = close > sessionVWAP
+priceBelowVWAP = close < sessionVWAP
+
+emaBullish = (
+     ema9 > ema21 and
+     close > ema9 and
+     close > ema50
+)
+
+emaBearish = (
+     ema9 < ema21 and
+     close < ema9 and
+     close < ema50
+)
+
+strongTrend = adxValue >= minimumADX
+strongVolume = relativeVolume >= minimumRelativeVolume
+
+//=====================================================================
+// 14. POC CALCULATION
+//=====================================================================
+//
+// Approximate rolling volume-at-price POC.
+// Each candle's volume is allocated to the bin containing HLC3.
+//
+//=====================================================================
+
+float pocValue = na
+
+float pocHigh = ta.highest(
+     high,
+     pocLookback
+)
+
+float pocLow = ta.lowest(
+     low,
+     pocLookback
+)
+
+float pocRange = pocHigh - pocLow
+
+float pocBinSize = (
+     pocRange > 0
+     ? pocRange / pocBins
+     : syminfo.mintick
+)
+
+array<float> pocVolumes = array.new_float(
+     pocBins,
+     0.0
+)
+
+if (
+     bar_index >= pocLookback - 1 and
+     pocRange > 0
+)
+
+    for i = 0 to pocLookback - 1
+
+        float barPrice = hlc3[i]
+        float barVolume = volume[i]
+
+        int binIndex = int(
+             math.floor(
+                  (barPrice - pocLow) /
+                  pocBinSize
+             )
+        )
+
+        binIndex := math.max(
+             0,
+             math.min(
+                  pocBins - 1,
+                  binIndex
+             )
+        )
+
+        float previousVolume = array.get(
+             pocVolumes,
+             binIndex
+        )
+
+        array.set(
+             pocVolumes,
+             binIndex,
+             previousVolume + barVolume
+        )
+
+    float highestBinVolume = -1.0
+    int highestBinIndex = 0
+
+    for i = 0 to pocBins - 1
+
+        float currentBinVolume = array.get(
+             pocVolumes,
+             i
+        )
+
+        if currentBinVolume > highestBinVolume
+            highestBinVolume := currentBinVolume
+            highestBinIndex := i
+
+    pocValue := (
+         pocLow +
+         (highestBinIndex + 0.5) *
+         pocBinSize
+    )
+
+//=====================================================================
+// 15. POC DIRECTION
+//=====================================================================
+
+priceAbovePOC = (
+     not na(pocValue) and
+     close > pocValue
+)
+
+priceBelowPOC = (
+     not na(pocValue) and
+     close < pocValue
+)
+
+string pocStatus = "N/A"
+
+if priceAbovePOC
+    pocStatus := "ABOVE"
+else if priceBelowPOC
+    pocStatus := "BELOW"
+else if not na(pocValue)
+    pocStatus := "AT POC"
+
+//=====================================================================
+// 16. POC ZONE DISPLAY
+//=====================================================================
+
+var box pocZoneBox = na
+var line pocCenterLine = na
+var label pocZoneLabel = na
+
+float pocZoneHalfWidth = (
+     atrValue *
+     pocZoneATRWidth /
+     2.0
+)
+
+float pocZoneTop = (
+     not na(pocValue)
+     ? pocValue + pocZoneHalfWidth
+     : na
+)
+
+float pocZoneBottom = (
+     not na(pocValue)
+     ? pocValue - pocZoneHalfWidth
+     : na
+)
+
+if (
+     showPOC and
+     not na(pocValue)
+)
+
+    int pocLeftBar = math.max(
+         0,
+         bar_index - pocLookback + 1
+    )
+
+    if na(pocZoneBox)
+
+        pocZoneBox := box.new(
+             left = pocLeftBar,
+             top = pocZoneTop,
+             right = bar_index + 1,
+             bottom = pocZoneBottom,
+             xloc = xloc.bar_index,
+             extend = extend.right,
+             bgcolor = color.new(color.purple, 90),
+             border_color = color.new(color.fuchsia, 35),
+             border_width = 1
+        )
+
+    else
+
+        box.set_left(pocZoneBox, pocLeftBar)
+        box.set_right(pocZoneBox, bar_index + 1)
+        box.set_top(pocZoneBox, pocZoneTop)
+        box.set_bottom(pocZoneBox, pocZoneBottom)
+
+    if na(pocCenterLine)
+
+        pocCenterLine := line.new(
+             x1 = pocLeftBar,
+             y1 = pocValue,
+             x2 = bar_index + 1,
+             y2 = pocValue,
+             xloc = xloc.bar_index,
+             extend = extend.right,
+             color = color.new(color.fuchsia, 10),
+             width = 2
+        )
+
+    else
+
+        line.set_xy1(
+             pocCenterLine,
+             pocLeftBar,
+             pocValue
+        )
+
+        line.set_xy2(
+             pocCenterLine,
+             bar_index + 1,
+             pocValue
+        )
+
+    string pocLabelText = (
+         "POC  " +
+         str.tostring(
+              pocValue,
+              format.mintick
+         )
+    )
+
+    if na(pocZoneLabel)
+
+        pocZoneLabel := label.new(
+             bar_index,
+             pocValue,
+             pocLabelText,
+             xloc = xloc.bar_index,
+             style = label.style_label_left,
+             color = color.new(color.purple, 25),
+             textcolor = color.white,
+             size = size.small
+        )
+
+    else
+
+        label.set_xy(
+             pocZoneLabel,
+             bar_index,
+             pocValue
+        )
+
+        label.set_text(
+             pocZoneLabel,
+             pocLabelText
+        )
+
+if not showPOC
+
+    if not na(pocZoneBox)
+        box.delete(pocZoneBox)
+        pocZoneBox := na
+
+    if not na(pocCenterLine)
+        line.delete(pocCenterLine)
+        pocCenterLine := na
+
+    if not na(pocZoneLabel)
+        label.delete(pocZoneLabel)
+        pocZoneLabel := na
+
+//=====================================================================
+// 17. PREVIOUS DAY HIGH / LOW
+//=====================================================================
+
+previousDayHigh = request.security(
+     syminfo.tickerid,
+     "D",
+     high[1],
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_on
+)
+
+previousDayLow = request.security(
+     syminfo.tickerid,
+     "D",
+     low[1],
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_on
+)
+
+//=====================================================================
+// 18. PREMARKET HIGH / LOW
+//=====================================================================
+
+bool inPremarket = (
+     not na(
+          time(
+               timeframe.period,
+               premarketSession
+          )
+     )
+)
+
+bool newTradingDay = (
+     ta.change(
+          time("D")
+     ) != 0
+)
+
+var float premarketHigh = na
+var float premarketLow = na
+
+if newTradingDay
+    premarketHigh := na
+    premarketLow := na
+
+if inPremarket
+
+    if na(premarketHigh)
+        premarketHigh := high
+        premarketLow := low
+    else
+        premarketHigh := math.max(
+             premarketHigh,
+             high
+        )
+
+        premarketLow := math.min(
+             premarketLow,
+             low
+        )
+
+//=====================================================================
+// 19. OPENING RANGE
+//=====================================================================
+//
+// Designed around U.S. equity regular trading hours.
+// 15-minute OR = 09:30-09:45 ET
+// 30-minute OR = 09:30-10:00 ET.
+//
+//=====================================================================
+
+string openingRangeSession = (
+     openingRangeMinutes == 15
+     ? "0930-0945"
+     : "0930-1000"
+)
+
+bool inOpeningRange = (
+     not na(
+          time(
+               timeframe.period,
+               openingRangeSession
+          )
+     )
+)
+
+bool regularSession = (
+     not na(
+          time(
+               timeframe.period,
+               "0930-1600"
+          )
+     )
+)
+
+var float openingRangeHigh = na
+var float openingRangeLow = na
+var bool openingRangeComplete = false
+
+if newTradingDay
+    openingRangeHigh := na
+    openingRangeLow := na
+    openingRangeComplete := false
+
+if inOpeningRange
+
+    if na(openingRangeHigh)
+        openingRangeHigh := high
+        openingRangeLow := low
+    else
+        openingRangeHigh := math.max(
+             openingRangeHigh,
+             high
+        )
+
+        openingRangeLow := math.min(
+             openingRangeLow,
+             low
+        )
+
+if (
+     regularSession and
+     not inOpeningRange and
+     not na(openingRangeHigh)
+)
+    openingRangeComplete := true
+
+openingRangeMid = (
+     not na(openingRangeHigh) and
+     not na(openingRangeLow)
+     ? (
+          openingRangeHigh +
+          openingRangeLow
+       ) / 2.0
+     : na
+)
+
+string openingRangeStatus = "FORMING"
+
+if openingRangeComplete
+
+    if close > openingRangeHigh
+        openingRangeStatus := "ABOVE HIGH"
+
+    else if close < openingRangeLow
+        openingRangeStatus := "BELOW LOW"
+
+    else
+        openingRangeStatus := "INSIDE"
+
+//=====================================================================
+// 20. KEY LEVEL PLOTS
+//=====================================================================
+
+plot(
+     showPreviousDay
+     ? previousDayHigh
+     : na,
+     title = "Previous Day High",
+     color = color.new(color.red, 30),
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+plot(
+     showPreviousDay
+     ? previousDayLow
+     : na,
+     title = "Previous Day Low",
+     color = color.new(color.green, 30),
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+plot(
+     showPremarket
+     ? premarketHigh
+     : na,
+     title = "Premarket High",
+     color = color.new(color.orange, 25),
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+plot(
+     showPremarket
+     ? premarketLow
+     : na,
+     title = "Premarket Low",
+     color = color.new(color.orange, 25),
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+plot(
+     showOpeningRange
+     ? openingRangeHigh
+     : na,
+     title = "Opening Range High",
+     color = color.new(color.blue, 20),
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+plot(
+     showOpeningRange
+     ? openingRangeLow
+     : na,
+     title = "Opening Range Low",
+     color = color.new(color.blue, 20),
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+plot(
+     showOpeningRange and showORMid
+     ? openingRangeMid
+     : na,
+     title = "Opening Range Mid",
+     color = color.new(color.gray, 50),
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+//=====================================================================
+// 21. TREND SCORE
+//=====================================================================
+
+float trendScore = 0.0
+
+if ema9 > ema21
+    trendScore += 25
+else if ema9 < ema21
+    trendScore -= 25
+
+if close > ema50
+    trendScore += 25
+else if close < ema50
+    trendScore -= 25
+
+if ema50 > ema50[1]
+    trendScore += 20
+else if ema50 < ema50[1]
+    trendScore -= 20
+
+if priceAboveVWAP
+    trendScore += 30
+else if priceBelowVWAP
+    trendScore -= 30
+
+trendScore := clampSigned(
+     trendScore
+)
+
+//=====================================================================
+// 22. MOMENTUM SCORE
+//=====================================================================
+
+float momentumScore = 0.0
+
+if rsiValue >= 60
+    momentumScore += 35
+else if rsiValue >= 52
+    momentumScore += 20
+else if rsiValue <= 40
+    momentumScore -= 35
+else if rsiValue <= 48
+    momentumScore -= 20
+
+if macdBullish
+    momentumScore += 40
+else if macdBearish
+    momentumScore -= 40
+
+if close > close[1]
+    momentumScore += 25
+else if close < close[1]
+    momentumScore -= 25
+
+momentumScore := clampSigned(
+     momentumScore
+)
+
+//=====================================================================
+// 23. INSTITUTIONAL / PARTICIPATION SCORE
+//=====================================================================
+
+float institutionalScore = 0.0
+
+if priceAboveVWAP
+    institutionalScore += 45
+else if priceBelowVWAP
+    institutionalScore -= 45
+
+if (
+     strongTrend and
+     plusDI > minusDI
+)
+    institutionalScore += 30
+
+else if (
+     strongTrend and
+     minusDI > plusDI
+)
+    institutionalScore -= 30
+
+if (
+     strongVolume and
+     close > open
+)
+    institutionalScore += 25
+
+else if (
+     strongVolume and
+     close < open
+)
+    institutionalScore -= 25
+
+institutionalScore := clampSigned(
+     institutionalScore
+)
+
+//=====================================================================
+// 24. EXTERNAL CONFIRMATIONS
+//=====================================================================
+
+qqqScore = request.security(
+     symbolQQQ,
+     timeframe.period,
+     confirmationScore(),
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_off
+)
+
+diaScore = request.security(
+     symbolDIA,
+     timeframe.period,
+     confirmationScore(),
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_off
+)
+
+iwmScore = request.security(
+     symbolIWM,
+     timeframe.period,
+     confirmationScore(),
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_off
+)
+
+rawVixScore = request.security(
+     symbolVIX,
+     timeframe.period,
+     confirmationScore(),
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_off
+)
+
+vixEffectScore = -rawVixScore
+
+xlkScore = request.security(
+     symbolXLK,
+     timeframe.period,
+     confirmationScore(),
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_off
+)
+
+xlfScore = request.security(
+     symbolXLF,
+     timeframe.period,
+     confirmationScore(),
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_off
+)
+
+xlyScore = request.security(
+     symbolXLY,
+     timeframe.period,
+     confirmationScore(),
+     gaps = barmerge.gaps_off,
+     lookahead = barmerge.lookahead_off
+)
+
+//=====================================================================
+// 25. LEADERSHIP SCORE
+//=====================================================================
+
+totalWeight = (
+     weightQQQ +
+     weightDIA +
+     weightIWM +
+     weightVIX +
+     weightXLK +
+     weightXLF +
+     weightXLY
+)
+
+safeWeight = (
+     totalWeight > 0
+     ? totalWeight
+     : 1.0
+)
+
+leadershipScore = (
+     qqqScore * weightQQQ +
+     diaScore * weightDIA +
+     iwmScore * weightIWM +
+     vixEffectScore * weightVIX +
+     xlkScore * weightXLK +
+     xlfScore * weightXLF +
+     xlyScore * weightXLY
+) / safeWeight
+
+leadershipScore := clampSigned(
+     leadershipScore
+)
+
+//=====================================================================
+// 26. EXTERNAL CONFIRMATION COUNTS
+//=====================================================================
+
+int bullCount = 0
+int bearCount = 0
+
+if qqqScore >= 20
+    bullCount += 1
+else if qqqScore <= -20
+    bearCount += 1
+
+if diaScore >= 20
+    bullCount += 1
+else if diaScore <= -20
+    bearCount += 1
+
+if iwmScore >= 20
+    bullCount += 1
+else if iwmScore <= -20
+    bearCount += 1
+
+if vixEffectScore >= 20
+    bullCount += 1
+else if vixEffectScore <= -20
+    bearCount += 1
+
+if xlkScore >= 20
+    bullCount += 1
+else if xlkScore <= -20
+    bearCount += 1
+
+if xlfScore >= 20
+    bullCount += 1
+else if xlfScore <= -20
+    bearCount += 1
+
+if xlyScore >= 20
+    bullCount += 1
+else if xlyScore <= -20
+    bearCount += 1
+
+//=====================================================================
+// 27. POC SCORE
+//=====================================================================
+
+float pocDirectionalScore = 0.0
+
+if priceAbovePOC
+    pocDirectionalScore := 100.0
+else if priceBelowPOC
+    pocDirectionalScore := -100.0
+
+float normalizedPOCWeight = (
+     pocScoreWeight /
+     100.0
+)
+
+float remainingWeight = (
+     1.0 -
+     normalizedPOCWeight
+)
+
+//=====================================================================
+// 28. CONFIDENCE ENGINE
+//=====================================================================
+
+overallSignedScore = (
+     trendScore *
+     0.35 *
+     remainingWeight +
+
+     momentumScore *
+     0.20 *
+     remainingWeight +
+
+     institutionalScore *
+     0.20 *
+     remainingWeight +
+
+     leadershipScore *
+     0.25 *
+     remainingWeight +
+
+     pocDirectionalScore *
+     normalizedPOCWeight
+)
+
+overallSignedScore := clampSigned(
+     overallSignedScore
+)
+
+confidence = (
+     50.0 +
+     overallSignedScore /
+     2.0
+)
+
+confidence := clampConfidence(
+     confidence
+)
+
+//=====================================================================
+// 29. SUPPLY / DEMAND ARRAYS
+//=====================================================================
+
+var array<box> supplyZones = array.new_box()
+var array<box> demandZones = array.new_box()
+
+supplyPivot = ta.pivothigh(
+     high,
+     pivotLength,
+     pivotLength
+)
+
+demandPivot = ta.pivotlow(
+     low,
+     pivotLength,
+     pivotLength
+)
+
+pivotATR = atrValue[pivotLength]
+
+//=====================================================================
+// 30. CREATE SUPPLY
+//=====================================================================
+
+if (
+     showZones and
+     not na(supplyPivot) and
+     not na(pivotATR)
+)
+
+    float supplyTop = supplyPivot
+
+    float supplyBottom = (
+         supplyTop -
+         pivotATR *
+         zoneATRWidth
+    )
+
+    float supplyCenter = (
+         supplyTop +
+         supplyBottom
+    ) / 2.0
+
+    bool duplicateSupply = zoneExistsNear(
+         supplyZones,
+         supplyCenter,
+         pivotATR *
+         zoneSpacingATR
+    )
+
+    if not duplicateSupply
+
+        box newSupply = box.new(
+             left = bar_index - pivotLength,
+             top = supplyTop,
+             right = bar_index + 1,
+             bottom = supplyBottom,
+             xloc = xloc.bar_index,
+             extend = extend.right,
+             bgcolor = color.new(color.red, 92),
+             border_color = color.new(color.red, 35),
+             border_width = 1,
+             text = "SUPPLY",
+             text_color = color.new(color.white, 10),
+             text_size = size.small,
+             text_halign = text.align_right,
+             text_valign = text.align_center
+        )
+
+        array.unshift(
+             supplyZones,
+             newSupply
+        )
+
+        if array.size(supplyZones) > maxSupplyZones
+
+            box oldSupply = array.pop(
+                 supplyZones
+            )
+
+            box.delete(
+                 oldSupply
+            )
+
+//=====================================================================
+// 31. CREATE DEMAND
+//=====================================================================
+
+if (
+     showZones and
+     not na(demandPivot) and
+     not na(pivotATR)
+)
+
+    float demandBottom = demandPivot
+
+    float demandTop = (
+         demandBottom +
+         pivotATR *
+         zoneATRWidth
+    )
+
+    float demandCenter = (
+         demandTop +
+         demandBottom
+    ) / 2.0
+
+    bool duplicateDemand = zoneExistsNear(
+         demandZones,
+         demandCenter,
+         pivotATR *
+         zoneSpacingATR
+    )
+
+    if not duplicateDemand
+
+        box newDemand = box.new(
+             left = bar_index - pivotLength,
+             top = demandTop,
+             right = bar_index + 1,
+             bottom = demandBottom,
+             xloc = xloc.bar_index,
+             extend = extend.right,
+             bgcolor = color.new(color.green, 92),
+             border_color = color.new(color.green, 35),
+             border_width = 1,
+             text = "DEMAND",
+             text_color = color.new(color.white, 10),
+             text_size = size.small,
+             text_halign = text.align_right,
+             text_valign = text.align_center
+        )
+
+        array.unshift(
+             demandZones,
+             newDemand
+        )
+
+        if array.size(demandZones) > maxDemandZones
+
+            box oldDemand = array.pop(
+                 demandZones
+            )
+
+            box.delete(
+                 oldDemand
+            )
+
+//=====================================================================
+// 32. REMOVE BROKEN ZONES
+//=====================================================================
+
+if array.size(supplyZones) > 0
+
+    int supplyIndex = (
+         array.size(supplyZones) -
+         1
+    )
+
+    while supplyIndex >= 0
+
+        box currentSupply = array.get(
+             supplyZones,
+             supplyIndex
+        )
+
+        if (
+             barstate.isconfirmed and
+             close > box.get_top(currentSupply)
+        )
+
+            box.delete(
+                 currentSupply
+            )
+
+            array.remove(
+                 supplyZones,
+                 supplyIndex
+            )
+
+        supplyIndex -= 1
+
+if array.size(demandZones) > 0
+
+    int demandIndex = (
+         array.size(demandZones) -
+         1
+    )
+
+    while demandIndex >= 0
+
+        box currentDemand = array.get(
+             demandZones,
+             demandIndex
+        )
+
+        if (
+             barstate.isconfirmed and
+             close < box.get_bottom(currentDemand)
+        )
+
+            box.delete(
+                 currentDemand
+            )
+
+            array.remove(
+                 demandZones,
+                 demandIndex
+            )
+
+        demandIndex -= 1
+
+//=====================================================================
+// 33. NEAREST SUPPLY / DEMAND
+//=====================================================================
+
+float nearestSupplyTop = na
+float nearestSupplyBottom = na
+float nearestSupplyDistance = na
+
+float nearestDemandTop = na
+float nearestDemandBottom = na
+float nearestDemandDistance = na
+
+bool priceInSupply = false
+bool priceInDemand = false
+
+if array.size(supplyZones) > 0
+
+    for i = 0 to array.size(supplyZones) - 1
+
+        box currentSupply = array.get(
+             supplyZones,
+             i
+        )
+
+        float zoneTop = box.get_top(
+             currentSupply
+        )
+
+        float zoneBottom = box.get_bottom(
+             currentSupply
+        )
+
+        bool insideSupply = (
+             close >= zoneBottom and
+             close <= zoneTop
+        )
+
+        if insideSupply
+
+            priceInSupply := true
+            nearestSupplyTop := zoneTop
+            nearestSupplyBottom := zoneBottom
+            nearestSupplyDistance := 0.0
+
+        else if zoneBottom > close
+
+            float supplyDistance = (
+                 zoneBottom -
+                 close
+            )
+
+            if (
+                 na(nearestSupplyDistance) or
+                 supplyDistance <
+                 nearestSupplyDistance
+            )
+
+                nearestSupplyDistance := supplyDistance
+                nearestSupplyTop := zoneTop
+                nearestSupplyBottom := zoneBottom
+
+if array.size(demandZones) > 0
+
+    for i = 0 to array.size(demandZones) - 1
+
+        box currentDemand = array.get(
+             demandZones,
+             i
+        )
+
+        float zoneTop = box.get_top(
+             currentDemand
+        )
+
+        float zoneBottom = box.get_bottom(
+             currentDemand
+        )
+
+        bool insideDemand = (
+             close >= zoneBottom and
+             close <= zoneTop
+        )
+
+        if insideDemand
+
+            priceInDemand := true
+            nearestDemandTop := zoneTop
+            nearestDemandBottom := zoneBottom
+            nearestDemandDistance := 0.0
+
+        else if zoneTop < close
+
+            float demandDistance = (
+                 close -
+                 zoneTop
+            )
+
+            if (
+                 na(nearestDemandDistance) or
+                 demandDistance <
+                 nearestDemandDistance
+            )
+
+                nearestDemandDistance := demandDistance
+                nearestDemandTop := zoneTop
+                nearestDemandBottom := zoneBottom
+
+//=====================================================================
+// 34. ZONE STATUS
+//=====================================================================
+
+string zoneStatus = "BETWEEN ZONES"
+
+if priceInSupply
+    zoneStatus := "AT SUPPLY"
+else if priceInDemand
+    zoneStatus := "AT DEMAND"
+else if (
+     na(nearestSupplyDistance) and
+     na(nearestDemandDistance)
+)
+    zoneStatus := "NO ACTIVE ZONES"
+
+//=====================================================================
+// 35. LOCATION / OBSTACLE ENGINE
+//=====================================================================
+//
+// CALL:
+// Find nearest important price ABOVE current price.
+//
+// PUT:
+// Find nearest important price BELOW current price.
+//
+// Sources:
+// Supply/Demand
+// Opening Range
+// Previous Day High/Low
+// Premarket High/Low
+//
+//=====================================================================
+
+float callObstaclePrice = na
+string callObstacleName = "NONE"
+
+float putObstaclePrice = na
+string putObstacleName = "NONE"
+
+//---------------------------------------------------------------------
+// CALL: SUPPLY
+//---------------------------------------------------------------------
+
+if (
+     useSupplyDemandObstacle and
+     not na(nearestSupplyBottom) and
+     nearestSupplyBottom > close
+)
+
+    callObstaclePrice := nearestSupplyBottom
+    callObstacleName := "SUPPLY"
+
+//---------------------------------------------------------------------
+// CALL: PREVIOUS DAY HIGH
+//---------------------------------------------------------------------
+
+if (
+     usePreviousDayObstacle and
+     not na(previousDayHigh) and
+     previousDayHigh > close
+)
+
+    if (
+         na(callObstaclePrice) or
+         previousDayHigh < callObstaclePrice
+    )
+
+        callObstaclePrice := previousDayHigh
+        callObstacleName := "PDH"
+
+//---------------------------------------------------------------------
+// CALL: PREMARKET HIGH
+//---------------------------------------------------------------------
+
+if (
+     usePremarketObstacle and
+     not na(premarketHigh) and
+     premarketHigh > close
+)
+
+    if (
+         na(callObstaclePrice) or
+         premarketHigh < callObstaclePrice
+    )
+
+        callObstaclePrice := premarketHigh
+        callObstacleName := "PMH"
+
+//---------------------------------------------------------------------
+// CALL: OPENING RANGE HIGH
+//---------------------------------------------------------------------
+
+if (
+     useOpeningRangeObstacle and
+     openingRangeComplete and
+     not na(openingRangeHigh) and
+     openingRangeHigh > close
+)
+
+    if (
+         na(callObstaclePrice) or
+         openingRangeHigh < callObstaclePrice
+    )
+
+        callObstaclePrice := openingRangeHigh
+        callObstacleName := "OR HIGH"
+
+//---------------------------------------------------------------------
+// PUT: DEMAND
+//---------------------------------------------------------------------
+
+if (
+     useSupplyDemandObstacle and
+     not na(nearestDemandTop) and
+     nearestDemandTop < close
+)
+
+    putObstaclePrice := nearestDemandTop
+    putObstacleName := "DEMAND"
+
+//---------------------------------------------------------------------
+// PUT: PREVIOUS DAY LOW
+//---------------------------------------------------------------------
+
+if (
+     usePreviousDayObstacle and
+     not na(previousDayLow) and
+     previousDayLow < close
+)
+
+    if (
+         na(putObstaclePrice) or
+         previousDayLow > putObstaclePrice
+    )
+
+        putObstaclePrice := previousDayLow
+        putObstacleName := "PDL"
+
+//---------------------------------------------------------------------
+// PUT: PREMARKET LOW
+//---------------------------------------------------------------------
+
+if (
+     usePremarketObstacle and
+     not na(premarketLow) and
+     premarketLow < close
+)
+
+    if (
+         na(putObstaclePrice) or
+         premarketLow > putObstaclePrice
+    )
+
+        putObstaclePrice := premarketLow
+        putObstacleName := "PML"
+
+//---------------------------------------------------------------------
+// PUT: OPENING RANGE LOW
+//---------------------------------------------------------------------
+
+if (
+     useOpeningRangeObstacle and
+     openingRangeComplete and
+     not na(openingRangeLow) and
+     openingRangeLow < close
+)
+
+    if (
+         na(putObstaclePrice) or
+         openingRangeLow > putObstaclePrice
+    )
+
+        putObstaclePrice := openingRangeLow
+        putObstacleName := "OR LOW"
+
+//=====================================================================
+// 36. ROOM TO MOVE
+//=====================================================================
+
+float callRoomPrice = (
+     not na(callObstaclePrice)
+     ? callObstaclePrice - close
+     : na
+)
+
+float putRoomPrice = (
+     not na(putObstaclePrice)
+     ? close - putObstaclePrice
+     : na
+)
+
+float callRoomATR = (
+     not na(callRoomPrice) and
+     atrValue > 0
+     ? callRoomPrice / atrValue
+     : na
+)
+
+float putRoomATR = (
+     not na(putRoomPrice) and
+     atrValue > 0
+     ? putRoomPrice / atrValue
+     : na
+)
+
+bool callHasRoom = (
+     not useRoomFilter or
+     na(callRoomATR) or
+     callRoomATR >= minimumRoomATR
+)
+
+bool putHasRoom = (
+     not useRoomFilter or
+     na(putRoomATR) or
+     putRoomATR >= minimumRoomATR
+)
+
+string callRoomQuality = "OPEN"
+
+if not na(callRoomATR)
+
+    if callRoomATR >= excellentRoomATR
+        callRoomQuality := "EXCELLENT"
+
+    else if callRoomATR >= goodRoomATR
+        callRoomQuality := "GOOD"
+
+    else if callRoomATR >= minimumRoomATR
+        callRoomQuality := "OK"
+
+    else
+        callRoomQuality := "LIMITED"
+
+string putRoomQuality = "OPEN"
+
+if not na(putRoomATR)
+
+    if putRoomATR >= excellentRoomATR
+        putRoomQuality := "EXCELLENT"
+
+    else if putRoomATR >= goodRoomATR
+        putRoomQuality := "GOOD"
+
+    else if putRoomATR >= minimumRoomATR
+        putRoomQuality := "OK"
+
+    else
+        putRoomQuality := "LIMITED"
+
+//=====================================================================
+// 37. SIGNAL FILTERS
+//=====================================================================
+
+fiveMinuteOK = (
+     not onlyFiveMinute or
+     (
+          timeframe.isminutes and
+          timeframe.multiplier == 5
+     )
+)
+
+callQQQOK = (
+     not requireQQQ or
+     qqqScore >= 20
+)
+
+putQQQOK = (
+     not requireQQQ or
+     qqqScore <= -20
+)
+
+callVIXOK = (
+     not requireVIX or
+     vixEffectScore >= 20
+)
+
+putVIXOK = (
+     not requireVIX or
+     vixEffectScore <= -20
+)
+
+callVWAPOK = (
+     not requireVWAP or
+     priceAboveVWAP
+)
+
+putVWAPOK = (
+     not requireVWAP or
+     priceBelowVWAP
+)
+
+callEMAOK = (
+     not requireEMA or
+     emaBullish
+)
+
+putEMAOK = (
+     not requireEMA or
+     emaBearish
+)
+
+callPOCOK = (
+     not requirePOC or
+     priceAbovePOC
+)
+
+putPOCOK = (
+     not requirePOC or
+     priceBelowPOC
+)
+
+adxOK = (
+     not requireADX or
+     strongTrend
+)
+
+volumeOK = (
+     not requireVolume or
+     strongVolume
+)
+
+callLeadershipOK = (
+     bullCount >= minimumConfirmations and
+     leadershipScore > 0
+)
+
+putLeadershipOK = (
+     bearCount >= minimumConfirmations and
+     leadershipScore < 0
+)
+
+callZoneOK = not priceInSupply
+putZoneOK = not priceInDemand
+
+//=====================================================================
+// 38. RAW DIRECTIONAL SETUPS
+//=====================================================================
+//
+// First determine whether the market qualifies technically.
+// THEN the location engine decides whether enough room exists.
+//
+//=====================================================================
+
+rawCallSetup = (
+     fiveMinuteOK and
+     confidence >= callThreshold and
+     callQQQOK and
+     callVIXOK and
+     callVWAPOK and
+     callEMAOK and
+     callPOCOK and
+     adxOK and
+     volumeOK and
+     callLeadershipOK and
+     callZoneOK
+)
+
+rawPutSetup = (
+     fiveMinuteOK and
+     confidence <= putThreshold and
+     putQQQOK and
+     putVIXOK and
+     putVWAPOK and
+     putEMAOK and
+     putPOCOK and
+     adxOK and
+     volumeOK and
+     putLeadershipOK and
+     putZoneOK
+)
+
+//=====================================================================
+// 39. FINAL SETUPS
+//=====================================================================
+
+callLimitedRoom = (
+     rawCallSetup and
+     not callHasRoom
+)
+
+putLimitedRoom = (
+     rawPutSetup and
+     not putHasRoom
+)
+
+callSetup = (
+     rawCallSetup and
+     callHasRoom
+)
+
+putSetup = (
+     rawPutSetup and
+     putHasRoom
+)
+
+strongCallSetup = (
+     callSetup and
+     confidence >= strongCallThreshold
+)
+
+strongPutSetup = (
+     putSetup and
+     confidence <= strongPutThreshold
+)
+
+callWatch = (
+     not rawCallSetup and
+     confidence >= callWatchThreshold
+)
+
+putWatch = (
+     not rawPutSetup and
+     confidence <= putWatchThreshold
+)
+
+//=====================================================================
+// 40. SIGNAL COOLDOWN
+//=====================================================================
+
+var int lastSignalBar = na
+
+cooldownOK = (
+     na(lastSignalBar) or
+     bar_index -
+     lastSignalBar >=
+     cooldownBars
+)
+
+previousCallSetup = (
+     bar_index > 0
+     ? callSetup[1]
+     : false
+)
+
+previousPutSetup = (
+     bar_index > 0
+     ? putSetup[1]
+     : false
+)
+
+callSignal = (
+     barstate.isconfirmed and
+     callSetup and
+     not previousCallSetup and
+     cooldownOK
+)
+
+putSignal = (
+     barstate.isconfirmed and
+     putSetup and
+     not previousPutSetup and
+     cooldownOK
+)
+
+if (
+     callSignal or
+     putSignal
+)
+    lastSignalBar := bar_index
+
+//=====================================================================
+// 41. MARKET STATUS
+//=====================================================================
+
+string marketStatus = "WAIT"
+
+if strongCallSetup
+    marketStatus := "STRONG CALL"
+
+else if callSetup
+    marketStatus := "CALL"
+
+else if callLimitedRoom
+    marketStatus := "CALL - LIMITED ROOM"
+
+else if strongPutSetup
+    marketStatus := "STRONG PUT"
+
+else if putSetup
+    marketStatus := "PUT"
+
+else if putLimitedRoom
+    marketStatus := "PUT - LIMITED ROOM"
+
+else if callWatch
+    marketStatus := "CALL WATCH"
+
+else if putWatch
+    marketStatus := "PUT WATCH"
+
+//=====================================================================
+// 42. ACTIVE DIRECTION / LOCATION
+//=====================================================================
+
+bool bullishBias = (
+     overallSignedScore >= 0
+)
+
+string activeObstacleName = (
+     bullishBias
+     ? callObstacleName
+     : putObstacleName
+)
+
+float activeObstaclePrice = (
+     bullishBias
+     ? callObstaclePrice
+     : putObstaclePrice
+)
+
+float activeRoomATR = (
+     bullishBias
+     ? callRoomATR
+     : putRoomATR
+)
+
+string activeRoomQuality = (
+     bullishBias
+     ? callRoomQuality
+     : putRoomQuality
+)
+
+//=====================================================================
+// 43. ENTRY / STOP / TARGETS
+//=====================================================================
+
+referenceEntry = close
+
+referenceStop = (
+     bullishBias
+     ? referenceEntry -
+       atrValue *
+       stopATR
+     : referenceEntry +
+       atrValue *
+       stopATR
+)
+
+referenceTarget1 = (
+     bullishBias
+     ? referenceEntry +
+       atrValue *
+       target1ATR
+     : referenceEntry -
+       atrValue *
+       target1ATR
+)
+
+referenceTarget2 = (
+     bullishBias
+     ? referenceEntry +
+       atrValue *
+       target2ATR
+     : referenceEntry -
+       atrValue *
+       target2ATR
+)
+
+riskDistance = math.abs(
+     referenceEntry -
+     referenceStop
+)
+
+rewardDistance = math.abs(
+     referenceTarget2 -
+     referenceEntry
+)
+
+rewardRisk = (
+     riskDistance > 0
+     ? rewardDistance / riskDistance
+     : 0.0
+)
+
+//=====================================================================
+// 44. MAIN CHART PLOTS
+//=====================================================================
+
+plot(
+     showEMA ? ema9 : na,
+     title = "EMA 9",
+     color = color.aqua,
+     linewidth = 2
+)
+
+plot(
+     showEMA ? ema21 : na,
+     title = "EMA 21",
+     color = color.orange,
+     linewidth = 2
+)
+
+plot(
+     showEMA ? ema50 : na,
+     title = "EMA 50",
+     color = color.yellow,
+     linewidth = 2
+)
+
+plot(
+     showVWAP ? sessionVWAP : na,
+     title = "VWAP",
+     color = color.purple,
+     linewidth = 2
+)
+
+plot(
+     showTradeLevels
+     ? referenceEntry
+     : na,
+     title = "Entry",
+     color = color.white,
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+plot(
+     showTradeLevels
+     ? referenceStop
+     : na,
+     title = "Stop",
+     color = color.red,
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+plot(
+     showTradeLevels
+     ? referenceTarget1
+     : na,
+     title = "Target 1",
+     color = color.green,
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+plot(
+     showTradeLevels
+     ? referenceTarget2
+     : na,
+     title = "Target 2",
+     color = color.green,
+     linewidth = 1,
+     style = plot.style_linebr
+)
+
+//=====================================================================
+// 45. LATEST SIGNAL ONLY
+//=====================================================================
+
+var label latestSignalLabel = na
+
+if (
+     callSignal and
+     showLatestSignal
+)
+
+    if not na(latestSignalLabel)
+        label.delete(
+             latestSignalLabel
+        )
+
+    latestSignalLabel := label.new(
+         bar_index,
+         low,
+         strongCallSetup
+              ? "STRONG CALL"
+              : "CALL",
+         style = label.style_label_up,
+         color = color.green,
+         textcolor = color.white,
+         size = size.normal
+    )
+
+if (
+     putSignal and
+     showLatestSignal
+)
+
+    if not na(latestSignalLabel)
+        label.delete(
+             latestSignalLabel
+        )
+
+    latestSignalLabel := label.new(
+         bar_index,
+         high,
+         strongPutSetup
+              ? "STRONG PUT"
+              : "PUT",
+         style = label.style_label_down,
+         color = color.red,
+         textcolor = color.white,
+         size = size.normal
+    )
+
+//=====================================================================
+// 46. DASHBOARD COLORS
+//=====================================================================
+
+color panelBG = color.rgb(
+     18,
+     22,
+     30
+)
+
+color panelHeader = color.rgb(
+     24,
+     29,
+     39
+)
+
+color panelBorder = color.rgb(
+     55,
+     62,
+     75
+)
+
+color bullishText = color.rgb(
+     60,
+     220,
+     100
+)
+
+color bearishText = color.rgb(
+     255,
+     75,
+     85
+)
+
+color neutralText = color.rgb(
+     220,
+     220,
+     220
+)
+
+color warningText = color.rgb(
+     255,
+     170,
+     0
+)
+
+color statusBG = panelBG
+color statusText = neutralText
+
+if (
+     marketStatus == "STRONG CALL" or
+     marketStatus == "CALL"
+)
+
+    statusBG := color.new(
+         color.green,
+         20
+    )
+
+    statusText := color.white
+
+else if (
+     marketStatus == "STRONG PUT" or
+     marketStatus == "PUT"
+)
+
+    statusBG := color.new(
+         color.red,
+         20
+    )
+
+    statusText := color.white
+
+else if (
+     marketStatus == "CALL - LIMITED ROOM" or
+     marketStatus == "PUT - LIMITED ROOM"
+)
+
+    statusBG := color.new(
+         color.orange,
+         30
+    )
+
+    statusText := color.white
+
+//=====================================================================
+// 47. DASHBOARD
+//=====================================================================
+
+var table dash = table.new(
+     position.top_right,
+     2,
+     38,
+     bgcolor = panelBG,
+     frame_color = panelBorder,
+     frame_width = 1,
+     border_color = panelBorder,
+     border_width = 1
+)
+
+if (
+     barstate.islast and
+     showDashboard
+)
+
+    table.clear(
+         dash,
+         0,
+         0,
+         1,
+         37
+    )
+
+    //-------------------------------------------------------------
+    // HEADER
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         0,
+         "SPY OPTIONS V3",
+         bgcolor = panelHeader,
+         text_color = color.white
+    )
+
+    table.cell(
+         dash,
+         1,
+         0,
+         "LOCATION • 5 MIN",
+         bgcolor = panelHeader,
+         text_color = color.white
+    )
+
+    //-------------------------------------------------------------
+    // STATUS
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         1,
+         "MARKET STATUS",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         1,
+         marketStatus,
+         bgcolor = statusBG,
+         text_color = statusText
+    )
+
+    //-------------------------------------------------------------
+    // CONFIDENCE
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         2,
+         "CONFIDENCE",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         2,
+         str.tostring(
+              confidence,
+              "#.0"
+         ) + "%",
+         bgcolor = panelBG,
+         text_color = overallSignedScore >= 0
+              ? bullishText
+              : bearishText
+    )
+
+    //-------------------------------------------------------------
+    // TREND
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         3,
+         "Trend",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         3,
+         directionText(trendScore),
+         bgcolor = panelBG,
+         text_color = trendScore >= 20
+              ? bullishText
+              : trendScore <= -20
+              ? bearishText
+              : neutralText
+    )
+
+    //-------------------------------------------------------------
+    // MOMENTUM
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         4,
+         "Momentum",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         4,
+         directionText(momentumScore),
+         bgcolor = panelBG,
+         text_color = momentumScore >= 20
+              ? bullishText
+              : momentumScore <= -20
+              ? bearishText
+              : neutralText
+    )
+
+    //-------------------------------------------------------------
+    // MACD
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         5,
+         "MACD",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         5,
+         macdStatus,
+         bgcolor = panelBG,
+         text_color = macdBullish
+              ? bullishText
+              : macdBearish
+              ? bearishText
+              : warningText
+    )
+
+    //-------------------------------------------------------------
+    // RSI
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         6,
+         "RSI",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         6,
+         str.tostring(
+              rsiValue,
+              "#.0"
+         ),
+         bgcolor = panelBG,
+         text_color = rsiValue >= 55
+              ? bullishText
+              : rsiValue <= 45
+              ? bearishText
+              : neutralText
+    )
+
+    //-------------------------------------------------------------
+    // LEADERSHIP
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         7,
+         "Leadership",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         7,
+         directionText(leadershipScore),
+         bgcolor = panelBG,
+         text_color = leadershipScore >= 20
+              ? bullishText
+              : leadershipScore <= -20
+              ? bearishText
+              : neutralText
+    )
+
+    //-------------------------------------------------------------
+    // CONFIRMATIONS
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         8,
+         "CONFIRMATIONS",
+         bgcolor = panelHeader,
+         text_color = color.white
+    )
+
+    table.cell(
+         dash,
+         1,
+         8,
+         str.tostring(bullCount) +
+         " B / " +
+         str.tostring(bearCount) +
+         " S",
+         bgcolor = panelHeader,
+         text_color = color.white
+    )
+
+    table.cell(
+         dash,
+         0,
+         9,
+         "QQQ",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         9,
+         directionText(qqqScore),
+         bgcolor = panelBG,
+         text_color = qqqScore >= 20
+              ? bullishText
+              : qqqScore <= -20
+              ? bearishText
+              : neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         10,
+         "DIA",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         10,
+         directionText(diaScore),
+         bgcolor = panelBG,
+         text_color = diaScore >= 20
+              ? bullishText
+              : diaScore <= -20
+              ? bearishText
+              : neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         11,
+         "IWM",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         11,
+         directionText(iwmScore),
+         bgcolor = panelBG,
+         text_color = iwmScore >= 20
+              ? bullishText
+              : iwmScore <= -20
+              ? bearishText
+              : neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         12,
+         "VIX EFFECT",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         12,
+         directionText(vixEffectScore),
+         bgcolor = panelBG,
+         text_color = vixEffectScore >= 20
+              ? bullishText
+              : vixEffectScore <= -20
+              ? bearishText
+              : neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         13,
+         "XLK",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         13,
+         directionText(xlkScore),
+         bgcolor = panelBG,
+         text_color = xlkScore >= 20
+              ? bullishText
+              : xlkScore <= -20
+              ? bearishText
+              : neutralText
+    )
+
+    //-------------------------------------------------------------
+    // TECHNICALS
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         14,
+         "TECHNICALS",
+         bgcolor = panelHeader,
+         text_color = color.white
+    )
+
+    table.cell(
+         dash,
+         1,
+         14,
+         "",
+         bgcolor = panelHeader
+    )
+
+    table.cell(
+         dash,
+         0,
+         15,
+         "VWAP",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         15,
+         priceAboveVWAP
+              ? "ABOVE"
+              : "BELOW",
+         bgcolor = panelBG,
+         text_color = priceAboveVWAP
+              ? bullishText
+              : bearishText
+    )
+
+    table.cell(
+         dash,
+         0,
+         16,
+         "POC",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         16,
+         pocStatus,
+         bgcolor = panelBG,
+         text_color = priceAbovePOC
+              ? bullishText
+              : priceBelowPOC
+              ? bearishText
+              : warningText
+    )
+
+    string emaStatus = (
+         emaBullish
+         ? "BULLISH"
+         : emaBearish
+         ? "BEARISH"
+         : "MIXED"
+    )
+
+    table.cell(
+         dash,
+         0,
+         17,
+         "EMA",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         17,
+         emaStatus,
+         bgcolor = panelBG,
+         text_color = emaBullish
+              ? bullishText
+              : emaBearish
+              ? bearishText
+              : warningText
+    )
+
+    table.cell(
+         dash,
+         0,
+         18,
+         "ADX",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         18,
+         str.tostring(
+              adxValue,
+              "#.0"
+         ),
+         bgcolor = panelBG,
+         text_color = strongTrend
+              ? bullishText
+              : warningText
+    )
+
+    table.cell(
+         dash,
+         0,
+         19,
+         "Volume",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         19,
+         str.tostring(
+              relativeVolume,
+              "#.00"
+         ) + "x",
+         bgcolor = panelBG,
+         text_color = strongVolume
+              ? bullishText
+              : neutralText
+    )
+
+    //-------------------------------------------------------------
+    // LOCATION ENGINE
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         20,
+         "LOCATION",
+         bgcolor = panelHeader,
+         text_color = color.white
+    )
+
+    table.cell(
+         dash,
+         1,
+         20,
+         bullishBias
+              ? "CALL SIDE"
+              : "PUT SIDE",
+         bgcolor = panelHeader,
+         text_color = bullishBias
+              ? bullishText
+              : bearishText
+    )
+
+    table.cell(
+         dash,
+         0,
+         21,
+         "Opening Range",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         21,
+         openingRangeStatus,
+         bgcolor = panelBG,
+         text_color = openingRangeStatus == "ABOVE HIGH"
+              ? bullishText
+              : openingRangeStatus == "BELOW LOW"
+              ? bearishText
+              : warningText
+    )
+
+    table.cell(
+         dash,
+         0,
+         22,
+         "OR High",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         22,
+         na(openingRangeHigh)
+              ? "N/A"
+              : str.tostring(
+                   openingRangeHigh,
+                   format.mintick
+                ),
+         bgcolor = panelBG,
+         text_color = neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         23,
+         "OR Low",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         23,
+         na(openingRangeLow)
+              ? "N/A"
+              : str.tostring(
+                   openingRangeLow,
+                   format.mintick
+                ),
+         bgcolor = panelBG,
+         text_color = neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         24,
+         "PDH / PDL",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         24,
+         str.tostring(
+              previousDayHigh,
+              format.mintick
+         ) +
+         " / " +
+         str.tostring(
+              previousDayLow,
+              format.mintick
+         ),
+         bgcolor = panelBG,
+         text_color = neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         25,
+         "PMH / PML",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         25,
+         (
+              na(premarketHigh)
+              ? "N/A"
+              : str.tostring(
+                   premarketHigh,
+                   format.mintick
+                )
+         ) +
+         " / " +
+         (
+              na(premarketLow)
+              ? "N/A"
+              : str.tostring(
+                   premarketLow,
+                   format.mintick
+                )
+         ),
+         bgcolor = panelBG,
+         text_color = neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         26,
+         "Nearest Block",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         26,
+         activeObstacleName,
+         bgcolor = panelBG,
+         text_color = activeObstacleName == "NONE"
+              ? bullishText
+              : warningText
+    )
+
+    table.cell(
+         dash,
+         0,
+         27,
+         "Block Price",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         27,
+         na(activeObstaclePrice)
+              ? "OPEN"
+              : str.tostring(
+                   activeObstaclePrice,
+                   format.mintick
+                ),
+         bgcolor = panelBG,
+         text_color = neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         28,
+         "Room",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         28,
+         na(activeRoomATR)
+              ? "OPEN"
+              : str.tostring(
+                   activeRoomATR,
+                   "#.00"
+                ) + " ATR",
+         bgcolor = panelBG,
+         text_color = activeRoomQuality == "LIMITED"
+              ? bearishText
+              : activeRoomQuality == "EXCELLENT"
+              ? bullishText
+              : neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         29,
+         "Entry Quality",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         29,
+         activeRoomQuality,
+         bgcolor = panelBG,
+         text_color = activeRoomQuality == "LIMITED"
+              ? bearishText
+              : activeRoomQuality == "EXCELLENT"
+              ? bullishText
+              : activeRoomQuality == "GOOD"
+              ? bullishText
+              : neutralText
+    )
+
+    //-------------------------------------------------------------
+    // TRADE LEVELS
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         30,
+         "TRADE PLAN",
+         bgcolor = panelHeader,
+         text_color = color.white
+    )
+
+    table.cell(
+         dash,
+         1,
+         30,
+         "",
+         bgcolor = panelHeader
+    )
+
+    table.cell(
+         dash,
+         0,
+         31,
+         "Entry",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         31,
+         str.tostring(
+              referenceEntry,
+              format.mintick
+         ),
+         bgcolor = panelBG,
+         text_color = color.white
+    )
+
+    table.cell(
+         dash,
+         0,
+         32,
+         "Stop",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         32,
+         str.tostring(
+              referenceStop,
+              format.mintick
+         ),
+         bgcolor = panelBG,
+         text_color = bearishText
+    )
+
+    table.cell(
+         dash,
+         0,
+         33,
+         "Target 1",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         33,
+         str.tostring(
+              referenceTarget1,
+              format.mintick
+         ),
+         bgcolor = panelBG,
+         text_color = bullishText
+    )
+
+    table.cell(
+         dash,
+         0,
+         34,
+         "Target 2",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         34,
+         str.tostring(
+              referenceTarget2,
+              format.mintick
+         ),
+         bgcolor = panelBG,
+         text_color = bullishText
+    )
+
+    table.cell(
+         dash,
+         0,
+         35,
+         "R / R",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         35,
+         str.tostring(
+              rewardRisk,
+              "#.00"
+         ) + " : 1",
+         bgcolor = panelBG,
+         text_color = neutralText
+    )
+
+    //-------------------------------------------------------------
+    // ZONES
+    //-------------------------------------------------------------
+
+    table.cell(
+         dash,
+         0,
+         36,
+         "Zone Status",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         36,
+         zoneStatus,
+         bgcolor = panelBG,
+         text_color = priceInSupply
+              ? bearishText
+              : priceInDemand
+              ? bullishText
+              : neutralText
+    )
+
+    table.cell(
+         dash,
+         0,
+         37,
+         "POC Price",
+         bgcolor = panelBG,
+         text_color = color.silver
+    )
+
+    table.cell(
+         dash,
+         1,
+         37,
+         na(pocValue)
+              ? "N/A"
+              : str.tostring(
+                   pocValue,
+                   format.mintick
+                ),
+         bgcolor = panelBG,
+         text_color = color.fuchsia
+    )
+
+//=====================================================================
+// 48. ALERTS
+//=====================================================================
+
+enteredSupply = (
+     barstate.isconfirmed and
+     priceInSupply and
+     not priceInSupply[1]
+)
+
+enteredDemand = (
+     barstate.isconfirmed and
+     priceInDemand and
+     not priceInDemand[1]
+)
+
+crossedAbovePOC = (
+     barstate.isconfirmed and
+     ta.crossover(
+          close,
+          pocValue
+     )
+)
+
+crossedBelowPOC = (
+     barstate.isconfirmed and
+     ta.crossunder(
+          close,
+          pocValue
+     )
+)
+
+breakORHigh = (
+     barstate.isconfirmed and
+     openingRangeComplete and
+     ta.crossover(
+          close,
+          openingRangeHigh
+     )
+)
+
+breakORLow = (
+     barstate.isconfirmed and
+     openingRangeComplete and
+     ta.crossunder(
+          close,
+          openingRangeLow
+     )
+)
+
+alertcondition(
+     callSignal,
+     title = "SPY CALL",
+     message = "SPY CALL confirmed with location filter."
+)
+
+alertcondition(
+     putSignal,
+     title = "SPY PUT",
+     message = "SPY PUT confirmed with location filter."
+)
+
+alertcondition(
+     callLimitedRoom,
+     title = "SPY CALL LIMITED ROOM",
+     message = "SPY bullish setup detected, but upside room is limited."
+)
+
+alertcondition(
+     putLimitedRoom,
+     title = "SPY PUT LIMITED ROOM",
+     message = "SPY bearish setup detected, but downside room is limited."
+)
+
+alertcondition(
+     enteredSupply,
+     title = "SPY ENTERED SUPPLY",
+     message = "SPY entered supply."
+)
+
+alertcondition(
+     enteredDemand,
+     title = "SPY ENTERED DEMAND",
+     message = "SPY entered demand."
+)
+
+alertcondition(
+     crossedAbovePOC,
+     title = "SPY ABOVE POC",
+     message = "SPY crossed above POC."
+)
+
+alertcondition(
+     crossedBelowPOC,
+     title = "SPY BELOW POC",
+     message = "SPY crossed below POC."
+)
+
+alertcondition(
+     breakORHigh,
+     title = "SPY BREAK OR HIGH",
+     message = "SPY broke above the Opening Range High."
+)
+
+alertcondition(
+     breakORLow,
+     title = "SPY BREAK OR LOW",
+     message = "SPY broke below the Opening Range Low."
+)
